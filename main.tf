@@ -6,20 +6,20 @@ terraform {
       version = "~> 5.0"
     }
   }
+  
+  backend "s3" {
+    # Note: bucket name will be set via terraform init -backend-config
+    key    = "personalcloud/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
   region = var.aws_region
 }
 
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-
 resource "aws_s3_bucket" "glacier_backup" {
-  bucket = "${var.bucket_name}-${random_string.bucket_suffix.result}"
+  bucket = "${var.bucket_name}"
 }
 
 resource "aws_s3_bucket_public_access_block" "glacier_backup" {
@@ -46,41 +46,4 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "glacier_backup" {
       sse_algorithm = "AES256"
     }
   }
-}
-
-resource "aws_iam_user" "backup_user" {
-  name = "${var.bucket_name}-backup-user"
-}
-
-resource "aws_iam_user_policy" "backup_policy" {
-  name = "${var.bucket_name}-backup-policy"
-  user = aws_iam_user.backup_user.name
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:ListBucket",
-          "s3:GetBucketLocation"
-        ]
-        Resource = aws_s3_bucket.glacier_backup.arn
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-          "s3:RestoreObject"
-        ]
-        Resource = "${aws_s3_bucket.glacier_backup.arn}/*"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_access_key" "backup_user_key" {
-  user = aws_iam_user.backup_user.name
 }

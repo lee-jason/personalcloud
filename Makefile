@@ -1,7 +1,8 @@
-.PHONY: help setup push pull restore status clean
+.PHONY: help bootstrap setup push pull restore status clean
 
 BUCKET_NAME := $(shell terraform output -raw bucket_name 2>/dev/null || echo "not-deployed")
-REGION := $(shell terraform output -raw bucket_region 2>/dev/null || echo "us-west-2")
+REGION := $(shell terraform output -raw bucket_region 2>/dev/null || echo "us-east-1")
+STATE_BUCKET := $(shell terraform output -raw terraform_state_bucket 2>/dev/null || echo "not-deployed")
 LOCAL_PATH := ./backup
 STORAGE_CLASS := DEEP_ARCHIVE
 
@@ -10,9 +11,23 @@ help: ## Show this help message
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 
-setup: ## Deploy infrastructure with Terraform
-	@echo "Deploying S3 Glacier infrastructure..."
+bootstrap: ## Bootstrap Terraform state bucket (run once)
+	@echo "Bootstrapping Terraform state infrastructure..."
 	terraform init
+	terraform apply -target=aws_s3_bucket.terraform_state
+	terraform apply -target=aws_s3_bucket_public_access_block.terraform_state
+	terraform apply -target=aws_s3_bucket_versioning.terraform_state
+	terraform apply -target=aws_s3_bucket_server_side_encryption_configuration.terraform_state
+	@echo ""
+	@echo "State bucket created! Now run 'make setup' to enable remote state."
+
+setup: ## Deploy infrastructure with remote state
+	@echo "Configuring remote state and deploying infrastructure..."
+	@if [ "$(STATE_BUCKET)" = "not-deployed" ]; then \
+		echo "Error: State bucket not found. Run 'make bootstrap' first."; \
+		exit 1; \
+	fi
+	terraform init -reconfigure -backend-config="bucket=$(STATE_BUCKET)"
 	terraform plan
 	terraform apply
 	@echo ""
@@ -75,3 +90,25 @@ status: ## Check restoration status of files
 	aws s3api list-objects-v2 --bucket $(BUCKET_NAME) \
 		--query 'Contents[?RestoreStatus].[Key,RestoreStatus]' \
 		--output table
+
+info: ## Show bucket information
+	@if [ "$(BUCKET_NAME)" = "not-deployed" ]; then \
+		echo "Error: Infrastructure not deployed. Run 'make setup' first."; \
+		exit 1; \
+	fi
+	@echo "Bucket: $(BUCKET_NAME)"
+	@echo "Region: $(REGION)"
+	@echo "Local Path: $(LOCAL_PATH)"
+	@echo "Storage Class: $(STORAGE_CLASS)"
+	@echo ""
+	@echo "Bucket contents:"
+	aws s3 ls s3://$(BUCKET_NAME)/ --recursive --human-readable
+
+clean: ## Destroy infrastructure (WARNING: This deletes everything!)
+	@echo "WARNING: This will destroy all infrastructure and data!"
+	@read -p "Are you sure? Type 'yes' to continue: " confirm; \
+	if [ "$$confirm" = "yes" ]; then \
+		terraform destroy; \
+	else \
+		echo "Cancelled."; \
+	fi
