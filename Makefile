@@ -18,8 +18,7 @@ push: ## Upload local files to S3 Glacier Deep Archive
 	fi
 	@echo "Syncing $(LOCAL_PATH) to s3://$(BUCKET_NAME)/ (Deep Archive)..."
 	aws s3 sync $(LOCAL_PATH)/ s3://$(BUCKET_NAME)/ \
-		--storage-class $(STORAGE_CLASS) \
-		--delete
+		--storage-class $(STORAGE_CLASS)
 	@echo "Upload complete!"
 
 restore: ## Initiate restoration of all files (12-48 hour delay)
