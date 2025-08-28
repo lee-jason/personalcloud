@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = "${var.terraform_state_bucket}"
+  bucket = "personal-glacier-terraform-state"
 }
 
 resource "aws_s3_bucket_public_access_block" "terraform_state" {

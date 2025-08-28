@@ -1,8 +1,8 @@
 .PHONY: help bootstrap setup push pull restore status clean
 
-BUCKET_NAME := $(shell terraform output -raw bucket_name 2>/dev/null || echo "not-deployed")
-REGION := $(shell terraform output -raw bucket_region 2>/dev/null || echo "us-east-1")
-STATE_BUCKET := $(shell terraform output -raw terraform_state_bucket 2>/dev/null || echo "not-deployed")
+BUCKET_NAME := "personal-glacier-cloud"
+REGION := "us-east-1"
+STATE_BUCKET := "personal-glacier-terraform-state"
 LOCAL_PATH := ./backup
 STORAGE_CLASS := DEEP_ARCHIVE
 
@@ -10,40 +10,6 @@ help: ## Show this help message
 	@echo "Personal Cloud Storage Commands:"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
-
-bootstrap: ## Bootstrap Terraform state bucket (run once)
-	@echo "Bootstrapping Terraform state infrastructure..."
-	terraform init
-	terraform apply -target=aws_s3_bucket.terraform_state
-	terraform apply -target=aws_s3_bucket_public_access_block.terraform_state
-	terraform apply -target=aws_s3_bucket_versioning.terraform_state
-	terraform apply -target=aws_s3_bucket_server_side_encryption_configuration.terraform_state
-	@echo ""
-	@echo "State bucket created! Now run 'make setup' to enable remote state."
-
-setup: ## Deploy infrastructure with remote state
-	@echo "Configuring remote state and deploying infrastructure..."
-	@if [ "$(STATE_BUCKET)" = "not-deployed" ]; then \
-		echo "Error: State bucket not found. Run 'make bootstrap' first."; \
-		exit 1; \
-	fi
-	terraform init -reconfigure -backend-config="bucket=$(STATE_BUCKET)"
-	terraform plan
-	terraform apply
-	@echo ""
-	@echo "Setup complete! Run 'make credentials' to configure AWS CLI"
-
-credentials: ## Display AWS credentials setup instructions
-	@echo "Configure AWS CLI with these credentials:"
-	@echo ""
-	@echo "aws configure set aws_access_key_id $$(terraform output -raw iam_access_key_id)"
-	@echo "aws configure set aws_secret_access_key $$(terraform output -raw iam_secret_access_key)"
-	@echo "aws configure set region $(REGION)"
-	@echo ""
-	@echo "Or create a named profile:"
-	@echo "aws configure set aws_access_key_id $$(terraform output -raw iam_access_key_id) --profile personalcloud"
-	@echo "aws configure set aws_secret_access_key $$(terraform output -raw iam_secret_access_key) --profile personalcloud"
-	@echo "aws configure set region $(REGION) --profile personalcloud"
 
 push: ## Upload local files to S3 Glacier Deep Archive
 	@if [ "$(BUCKET_NAME)" = "not-deployed" ]; then \

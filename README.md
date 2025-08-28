@@ -3,40 +3,18 @@
 Simple S3 Glacier Deep Archive backup solution with Terraform and Make.
 
 ## Quick Start
+Login to AWS CLI with S3 access credentials
 
-1. **Bootstrap Terraform state (run once):**
+1. **Pull files**
    ```bash
-   make bootstrap
+   make pull
    ```
 
-2. **Deploy infrastructure:**
+2. **Upload files:**
    ```bash
-   make setup
-   ```
-
-3. **Configure AWS credentials:**
-   ```bash
-   make credentials
-   ```
-
-4. **Upload files:**
-   ```bash
-   mkdir backup
-   cp -r ~/Documents/important-stuff backup/
    make push
    ```
 
-## Commands
-
-- `make help` - Show all commands
-- `make bootstrap` - Create Terraform state bucket (run once)
-- `make setup` - Deploy S3 bucket and IAM user with remote state
-- `make push` - Upload files to Glacier Deep Archive
-- `make restore` - Start file restoration (12-48 hours)
-- `make pull` - Download restored files
-- `make status` - Check restoration progress
-- `make info` - Show bucket details
-- `make clean` - Destroy everything
 
 ## How It Works
 

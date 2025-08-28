@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "bucket_name" {
   description = "Base name for the S3 bucket (will have random suffix)"
   type        = string
-  default     = "personal-glacier-backup"
+  default     = "personal-glacier-cloud"
 }
 
 variable "terraform_state_bucket" {
@@ -15,7 +15,6 @@ variable "terraform_state_bucket" {
   type        = string
   default    = "personal-glacier-terraform-state"
 }
-
 
 variable "local_backup_path" {
   description = "Local path to sync with S3"

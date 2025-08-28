@@ -10,6 +10,7 @@ terraform {
   backend "s3" {
     # Note: bucket name will be set via terraform init -backend-config
     key    = "personalcloud/terraform.tfstate"
+    bucket = "personal-glacier-terraform-state"
     region = "us-east-1"
   }
 }
