@@ -11,6 +11,7 @@ terraform.tfstate.backup
 aws-credentials.txt
 
 # Backup directory
+backup/
 
 # OS
 .DS_Store
