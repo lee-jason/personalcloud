@@ -10,7 +10,7 @@ terraform {
   backend "s3" {
     # Note: bucket name will be set via terraform init -backend-config
     key    = "personalcloud/terraform.tfstate"
-    bucket = "personal-glacier-terraform-state"
+    bucket = "terraform-state-jasonl"
     region = "us-east-1"
   }
 }
@@ -20,7 +20,8 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "glacier_backup" {
-  bucket = "${var.bucket_name}"
+  bucket        = "${var.bucket_name}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_public_access_block" "glacier_backup" {

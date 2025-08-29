@@ -68,12 +68,3 @@ info: ## Show bucket information
 	@echo ""
 	@echo "Bucket contents:"
 	aws s3 ls s3://$(BUCKET_NAME)/ --recursive --human-readable
-
-clean: ## Destroy infrastructure (WARNING: This deletes everything!)
-	@echo "WARNING: This will destroy all infrastructure and data!"
-	@read -p "Are you sure? Type 'yes' to continue: " confirm; \
-	if [ "$$confirm" = "yes" ]; then \
-		terraform destroy; \
-	else \
-		echo "Cancelled."; \
-	fi
