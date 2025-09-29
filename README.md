@@ -5,8 +5,18 @@ Simple S3 Glacier Deep Archive backup solution with Terraform and Make.
 ## Quick Start
 Login to AWS CLI with S3 access credentials
 
+Either
+0. 
+   ```bash
+   make restore-and-pull
+   # Just wait.
+   ```
+
+
 1. **Pull files**
    ```bash
+   make restore
+   # wait for 2 days
    make pull
    ```
 
